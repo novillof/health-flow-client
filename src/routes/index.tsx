@@ -368,6 +368,30 @@ function PatientsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete patient</DialogTitle>
+            <DialogDescription>
+              This will permanently remove {deleting ? patientDisplayName(deleting) : "this patient"} from the FHIR server.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={() => deleting && remove.mutate(deleting)}
+            >
+              {remove.isPending && <Loader2 className="size-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
