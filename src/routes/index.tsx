@@ -250,16 +250,25 @@ function PatientsPage() {
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">{patientDisplayName(patient)}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{patient.gender ?? "unknown"}</Badge>
+                    <Badge variant="outline" className={genderBadgeClass(patient.gender ?? "unknown")}>
+                      {patient.gender ?? "unknown"}
+                    </Badge>
                   </TableCell>
                   <TableCell>{patient.birthDate ?? "—"}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {patient.id}
-                  </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => openEdit(patient)}>
-                      <Pencil className="size-3.5" /> Edit
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(patient)}>
+                        <Pencil className="size-3.5" /> Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => setDeleting(patient)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
