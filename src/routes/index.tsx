@@ -239,7 +239,7 @@ function PatientsPage() {
 
               {!patientsQuery.isPending && patients.length === 0 && !errorMessage && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
                     <UserRound className="mx-auto mb-2 size-6" />
                     No patients found on the FHIR server.
                   </TableCell>
