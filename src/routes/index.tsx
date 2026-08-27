@@ -93,6 +93,7 @@ function PatientsPage() {
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Patient | null>(null);
+  const [deleting, setDeleting] = useState<Patient | null>(null);
   const [form, setForm] = useState<PatientInput>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
