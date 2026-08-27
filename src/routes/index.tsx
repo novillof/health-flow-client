@@ -277,6 +277,7 @@ function PatientsPage() {
                       <Button
                         variant="outline"
                         size="sm"
+                        aria-label="Delete patient"
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => setDeleting(patient)}
                       >
