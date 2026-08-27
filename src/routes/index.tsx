@@ -34,6 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createPatient,
+  deletePatient,
   patientDisplayName,
   searchPatients,
   updatePatient,
