@@ -120,6 +120,16 @@ function PatientsPage() {
     onError: (error: Error) => toast.error("Save failed", { description: error.message }),
   });
 
+  const remove = useMutation({
+    mutationFn: async (patient: Patient) => deletePatient(patient.id!),
+    onSuccess: (_, patient) => {
+      toast.success("Patient deleted", { description: patientDisplayName(patient) });
+      setDeleting(null);
+      void queryClient.invalidateQueries({ queryKey: ["patients"] });
+    },
+    onError: (error: Error) => toast.error("Delete failed", { description: error.message }),
+  });
+
   function openCreate() {
     setEditing(null);
     setForm(emptyForm);
