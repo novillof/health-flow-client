@@ -104,3 +104,9 @@ export async function updatePatient(id: string, input: PatientInput): Promise<Pa
     body: JSON.stringify(toPatientResource(input, id)),
   });
 }
+
+export async function deletePatient(id: string): Promise<void> {
+  await request(`Patient/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}

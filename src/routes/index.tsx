@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertCircle, Loader2, Pencil, Plus, Search, UserRound } from "lucide-react";
+import { Activity, AlertCircle, Loader2, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   createPatient,
+  deletePatient,
   patientDisplayName,
   searchPatients,
   updatePatient,
@@ -86,12 +87,27 @@ function validate(form: PatientInput): FormErrors {
   return errors;
 }
 
+function genderBadgeClass(gender: Gender): string {
+  switch (gender) {
+    case "male":
+      return "bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300";
+    case "female":
+      return "bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300";
+    case "other":
+      return "bg-violet-100 text-violet-800 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-300";
+    case "unknown":
+    default:
+      return "bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-900/30 dark:text-slate-300";
+  }
+}
+
 function PatientsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [query, setQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Patient | null>(null);
+  const [deleting, setDeleting] = useState<Patient | null>(null);
   const [form, setForm] = useState<PatientInput>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -116,6 +132,16 @@ function PatientsPage() {
       void queryClient.invalidateQueries({ queryKey: ["patients"] });
     },
     onError: (error: Error) => toast.error("Save failed", { description: error.message }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (patient: Patient) => deletePatient(patient.id!),
+    onSuccess: (_, patient) => {
+      toast.success("Patient deleted", { description: patientDisplayName(patient) });
+      setDeleting(null);
+      void queryClient.invalidateQueries({ queryKey: ["patients"] });
+    },
+    onError: (error: Error) => toast.error("Delete failed", { description: error.message }),
   });
 
   function openCreate() {
@@ -207,10 +233,9 @@ function PatientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Full name</TableHead>
+              <TableHead>Full name</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Date of birth</TableHead>
-                <TableHead>FHIR ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -218,7 +243,7 @@ function PatientsPage() {
               {patientsQuery.isPending &&
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 5 }).map((__, j) => (
+                    {Array.from({ length: 4 }).map((__, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-24" />
                       </TableCell>
@@ -228,7 +253,7 @@ function PatientsPage() {
 
               {!patientsQuery.isPending && patients.length === 0 && !errorMessage && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
                     <UserRound className="mx-auto mb-2 size-6" />
                     No patients found on the FHIR server.
                   </TableCell>
@@ -239,16 +264,26 @@ function PatientsPage() {
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">{patientDisplayName(patient)}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{patient.gender ?? "unknown"}</Badge>
+                    <Badge variant="outline" className={genderBadgeClass(patient.gender ?? "unknown")}>
+                      {patient.gender ?? "unknown"}
+                    </Badge>
                   </TableCell>
                   <TableCell>{patient.birthDate ?? "—"}</TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
-                    {patient.id}
-                  </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => openEdit(patient)}>
-                      <Pencil className="size-3.5" /> Edit
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(patient)}>
+                        <Pencil className="size-3.5" /> Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        aria-label="Delete patient"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => setDeleting(patient)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -332,6 +367,30 @@ function PatientsPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete patient</DialogTitle>
+            <DialogDescription>
+              This will permanently remove {deleting ? patientDisplayName(deleting) : "this patient"} from the FHIR server.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleting(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={remove.isPending}
+              onClick={() => deleting && remove.mutate(deleting)}
+            >
+              {remove.isPending && <Loader2 className="size-4 animate-spin" />}
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </main>
