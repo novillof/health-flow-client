@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertCircle, Loader2, Pencil, Plus, Search, UserRound } from "lucide-react";
+import { Activity, AlertCircle, Loader2, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
