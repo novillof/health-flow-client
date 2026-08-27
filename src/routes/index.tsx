@@ -87,6 +87,20 @@ function validate(form: PatientInput): FormErrors {
   return errors;
 }
 
+function genderBadgeClass(gender: Gender): string {
+  switch (gender) {
+    case "male":
+      return "bg-sky-100 text-sky-800 hover:bg-sky-200 dark:bg-sky-900/30 dark:text-sky-300";
+    case "female":
+      return "bg-rose-100 text-rose-800 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-300";
+    case "other":
+      return "bg-violet-100 text-violet-800 hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-300";
+    case "unknown":
+    default:
+      return "bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-900/30 dark:text-slate-300";
+  }
+}
+
 function PatientsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
