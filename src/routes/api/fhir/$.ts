@@ -41,7 +41,11 @@ async function proxy({
   }
 
   try {
-    const upstream = await fetch(target, { method: request.method, headers, body });
+    const upstream = await fetch(target, {
+      method: request.method,
+      headers,
+      ...(body === undefined ? {} : { body }),
+    });
     const text = await upstream.text();
     return new Response(text, {
       status: upstream.status,
