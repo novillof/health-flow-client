@@ -219,10 +219,9 @@ function PatientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Full name</TableHead>
+              <TableHead>Full name</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Date of birth</TableHead>
-                <TableHead>FHIR ID</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
