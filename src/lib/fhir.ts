@@ -110,3 +110,118 @@ export async function deletePatient(id: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+/* ---------- Patient read ---------- */
+
+export async function getPatient(id: string): Promise<Patient> {
+  return request<Patient>(`Patient/${encodeURIComponent(id)}`);
+}
+
+/* ---------- Observations (vitals) ---------- */
+
+export type Coding = { system?: string; code?: string; display?: string };
+export type CodeableConcept = { coding?: Coding[]; text?: string };
+export type Quantity = { value?: number; unit?: string };
+
+export type Observation = {
+  resourceType: "Observation";
+  id?: string;
+  status?: string;
+  code?: CodeableConcept;
+  effectiveDateTime?: string;
+  effectivePeriod?: { start?: string };
+  issued?: string;
+  valueQuantity?: Quantity;
+  component?: { code?: CodeableConcept; valueQuantity?: Quantity }[];
+};
+
+export type Condition = {
+  resourceType: "Condition";
+  id?: string;
+  code?: CodeableConcept;
+  onsetDateTime?: string;
+  onsetPeriod?: { start?: string };
+  recordedDate?: string;
+  clinicalStatus?: CodeableConcept;
+};
+
+export type MedicationRequest = {
+  resourceType: "MedicationRequest";
+  id?: string;
+  status?: string;
+  medicationCodeableConcept?: CodeableConcept;
+  medicationReference?: { display?: string; reference?: string };
+  authoredOn?: string;
+};
+
+type AnyBundle<T> = {
+  resourceType: "Bundle";
+  total?: number;
+  entry?: { resource?: T }[];
+};
+
+function collect<T extends { resourceType?: string }>(
+  bundle: AnyBundle<T>,
+  resourceType: string,
+): T[] {
+  return (bundle.entry ?? [])
+    .map((e) => e.resource)
+    .filter((r): r is T => r?.resourceType === resourceType);
+}
+
+export const VITAL_CODES = [
+  "8867-4",
+  "8310-5",
+  "9279-1",
+  "59408-5",
+  "8302-2",
+  "29463-7",
+  "39156-5",
+  "55284-4",
+] as const;
+
+export function observationCode(obs: Observation): string | undefined {
+  return obs.code?.coding?.find((c) => c.code)?.code;
+}
+
+export function observationDate(obs: Observation): string | undefined {
+  return obs.effectiveDateTime ?? obs.effectivePeriod?.start ?? obs.issued;
+}
+
+export function componentValue(obs: Observation, code: string): number | undefined {
+  const comp = obs.component?.find((c) => c.code?.coding?.some((cc) => cc.code === code));
+  return comp?.valueQuantity?.value;
+}
+
+export function codeableText(concept?: CodeableConcept): string {
+  return concept?.text ?? concept?.coding?.find((c) => c.display)?.display ?? "(unknown)";
+}
+
+export async function getVitalObservations(patientId: string): Promise<Observation[]> {
+  const params = new URLSearchParams({
+    subject: `Patient/${patientId}`,
+    code: VITAL_CODES.join(","),
+    _count: "500",
+  });
+  const bundle = await request<AnyBundle<Observation>>(`Observation?${params.toString()}`);
+  return collect(bundle, "Observation");
+}
+
+export async function getConditions(patientId: string): Promise<Condition[]> {
+  const params = new URLSearchParams({ patient: patientId, _count: "200" });
+  const bundle = await request<AnyBundle<Condition>>(`Condition?${params.toString()}`);
+  return collect(bundle, "Condition");
+}
+
+export async function getMedicationRequests(patientId: string): Promise<MedicationRequest[]> {
+  const params = new URLSearchParams({ patient: patientId, _count: "200" });
+  const bundle = await request<AnyBundle<MedicationRequest>>(
+    `MedicationRequest?${params.toString()}`,
+  );
+  return collect(bundle, "MedicationRequest");
+}
+
+export function medicationName(med: MedicationRequest): string {
+  if (med.medicationCodeableConcept) return codeableText(med.medicationCodeableConcept);
+  return med.medicationReference?.display ?? "(unknown medication)";
+}
