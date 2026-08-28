@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertCircle, Loader2, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
@@ -262,7 +262,15 @@ function PatientsPage() {
 
               {patients.map((patient) => (
                 <TableRow key={patient.id}>
-                  <TableCell className="font-medium">{patientDisplayName(patient)}</TableCell>
+                  <TableCell className="font-medium">
+                    <Link
+                      to="/patient/$id"
+                      params={{ id: patient.id! }}
+                      className="text-primary underline-offset-4 hover:underline"
+                    >
+                      {patientDisplayName(patient)}
+                    </Link>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={genderBadgeClass(patient.gender ?? "unknown")}>
                       {patient.gender ?? "unknown"}
