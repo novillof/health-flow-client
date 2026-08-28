@@ -63,6 +63,7 @@ type VitalDef = {
   key: string;
   label: string;
   code: string;
+  altCodes?: string[];
   series: { name: string; componentCode?: string; color: string }[];
 };
 
@@ -78,6 +79,7 @@ const VITALS: VitalDef[] = [
     key: "bp",
     label: "Blood pressure",
     code: "55284-4",
+    altCodes: ["85354-9"],
     series: [
       { name: "Systolic", componentCode: "8480-6", color: "var(--chart-1)" },
       { name: "Diastolic", componentCode: "8462-4", color: "var(--chart-4)" },
@@ -89,7 +91,10 @@ type Point = { date: string; label: string; unit?: string | undefined } & Record
 
 function buildPoints(observations: Observation[], def: VitalDef): Point[] {
   return observations
-    .filter((o) => observationCode(o) === def.code)
+    .filter((o) => {
+      const code = observationCode(o);
+      return code === def.code || (def.altCodes?.includes(code ?? "") ?? false);
+    })
     .map((o) => {
       const date = observationDate(o) ?? "";
       const point: Point = {

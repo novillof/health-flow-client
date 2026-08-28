@@ -178,6 +178,7 @@ export const VITAL_CODES = [
   "29463-7",
   "39156-5",
   "55284-4",
+  "85354-9",
 ] as const;
 
 export function observationCode(obs: Observation): string | undefined {
