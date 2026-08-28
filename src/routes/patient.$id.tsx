@@ -263,20 +263,24 @@ function PatientDetailPage() {
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold">Vital signs</h2>
-            <ToggleGroup
-              type="single"
-              value={view}
-              onValueChange={(v) => v && setView(v as "chart" | "table")}
-              variant="outline"
-              size="sm"
-            >
-              <ToggleGroupItem value="chart" aria-label="Chart view">
+            <div className="flex items-center gap-1 rounded-lg border border-border p-1">
+              <Button
+                size="sm"
+                variant={view === "chart" ? "default" : "ghost"}
+                aria-pressed={view === "chart"}
+                onClick={() => setView("chart")}
+              >
                 <BarChart3 className="size-4" /> Charts
-              </ToggleGroupItem>
-              <ToggleGroupItem value="table" aria-label="Table view">
+              </Button>
+              <Button
+                size="sm"
+                variant={view === "table" ? "default" : "ghost"}
+                aria-pressed={view === "table"}
+                onClick={() => setView("table")}
+              >
                 <TableIcon className="size-4" /> Table
-              </ToggleGroupItem>
-            </ToggleGroup>
+              </Button>
+            </div>
           </div>
 
           {vitalsQuery.error instanceof Error ? (
