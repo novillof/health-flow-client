@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PatientIdRouteImport } from './routes/patient.$id'
 import { Route as ApiFhirSplatRouteImport } from './routes/api/fhir/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatientIdRoute = PatientIdRouteImport.update({
+  id: '/patient/$id',
+  path: '/patient/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiFhirSplatRoute = ApiFhirSplatRouteImport.update({
@@ -25,27 +31,31 @@ const ApiFhirSplatRoute = ApiFhirSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/patient/$id': typeof PatientIdRoute
   '/api/fhir/$': typeof ApiFhirSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/patient/$id': typeof PatientIdRoute
   '/api/fhir/$': typeof ApiFhirSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/patient/$id': typeof PatientIdRoute
   '/api/fhir/$': typeof ApiFhirSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/fhir/$'
+  fullPaths: '/' | '/patient/$id' | '/api/fhir/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/fhir/$'
-  id: '__root__' | '/' | '/api/fhir/$'
+  to: '/' | '/patient/$id' | '/api/fhir/$'
+  id: '__root__' | '/' | '/patient/$id' | '/api/fhir/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PatientIdRoute: typeof PatientIdRoute
   ApiFhirSplatRoute: typeof ApiFhirSplatRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patient/$id': {
+      id: '/patient/$id'
+      path: '/patient/$id'
+      fullPath: '/patient/$id'
+      preLoaderRoute: typeof PatientIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/fhir/$': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PatientIdRoute: PatientIdRoute,
   ApiFhirSplatRoute: ApiFhirSplatRoute,
 }
 export const routeTree = rootRouteImport
