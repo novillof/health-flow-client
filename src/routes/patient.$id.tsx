@@ -68,25 +68,25 @@ type VitalDef = {
 };
 
 const VITALS: VitalDef[] = [
-  { key: "hr", label: "Heart rate", code: "8867-4", series: [{ name: "Heart rate", color: "hsl(var(--chart-1))" }] },
-  { key: "temp", label: "Temperature", code: "8310-5", series: [{ name: "Temperature", color: "hsl(var(--chart-2))" }] },
-  { key: "rr", label: "Respiratory rate", code: "9279-1", series: [{ name: "Respiratory rate", color: "hsl(var(--chart-3))" }] },
-  { key: "spo2", label: "Oxygen saturation", code: "59408-5", series: [{ name: "SpO₂", color: "hsl(var(--chart-4))" }] },
-  { key: "height", label: "Height", code: "8302-2", series: [{ name: "Height", color: "hsl(var(--chart-5))" }] },
-  { key: "weight", label: "Weight", code: "29463-7", series: [{ name: "Weight", color: "hsl(var(--chart-1))" }] },
-  { key: "bmi", label: "BMI", code: "39156-5", series: [{ name: "BMI", color: "hsl(var(--chart-2))" }] },
+  { key: "hr", label: "Heart rate", code: "8867-4", series: [{ name: "Heart rate", color: "var(--chart-1)" }] },
+  { key: "temp", label: "Temperature", code: "8310-5", series: [{ name: "Temperature", color: "var(--chart-2)" }] },
+  { key: "rr", label: "Respiratory rate", code: "9279-1", series: [{ name: "Respiratory rate", color: "var(--chart-3)" }] },
+  { key: "spo2", label: "Oxygen saturation", code: "59408-5", series: [{ name: "SpO₂", color: "var(--chart-4)" }] },
+  { key: "height", label: "Height", code: "8302-2", series: [{ name: "Height", color: "var(--chart-5)" }] },
+  { key: "weight", label: "Weight", code: "29463-7", series: [{ name: "Weight", color: "var(--chart-1)" }] },
+  { key: "bmi", label: "BMI", code: "39156-5", series: [{ name: "BMI", color: "var(--chart-2)" }] },
   {
     key: "bp",
     label: "Blood pressure",
     code: "55284-4",
     series: [
-      { name: "Systolic", componentCode: "8480-6", color: "hsl(var(--chart-1))" },
-      { name: "Diastolic", componentCode: "8462-4", color: "hsl(var(--chart-4))" },
+      { name: "Systolic", componentCode: "8480-6", color: "var(--chart-1)" },
+      { name: "Diastolic", componentCode: "8462-4", color: "var(--chart-4)" },
     ],
   },
 ];
 
-type Point = { date: string; label: string; unit?: string } & Record<string, string | number | undefined>;
+type Point = { date: string; label: string; unit?: string | undefined } & Record<string, string | number | undefined>;
 
 function buildPoints(observations: Observation[], def: VitalDef): Point[] {
   return observations
@@ -141,13 +141,13 @@ function VitalCard({ def, points, view }: { def: VitalDef; points: Point[]; view
         <div className="h-56 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-              <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={["auto", "auto"]} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+              <YAxis tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" domain={["auto", "auto"]} />
               <Tooltip
                 contentStyle={{
-                  background: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: 8,
                   fontSize: 12,
                 }}
