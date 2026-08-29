@@ -249,6 +249,21 @@ export async function getVitalObservations(patientId: string): Promise<Observati
   return collect(bundle, "Observation");
 }
 
+/** Laboratory observations used by the FIB-4 assessment (AST, ALT, platelets). */
+export const FIB4_LAB_CODES = ["1920-8", "1742-6", "777-3"] as const;
+
+export async function getLabObservations(patientId: string): Promise<Observation[]> {
+  const params = new URLSearchParams({
+    subject: `Patient/${patientId}`,
+    code: FIB4_LAB_CODES.join(","),
+    _count: "200",
+  });
+  const bundle = await request<AnyBundle<Observation>>(`Observation?${params.toString()}`);
+  return collect(bundle, "Observation");
+}
+
+
+
 export async function getConditions(patientId: string): Promise<Condition[]> {
   const params = new URLSearchParams({ patient: patientId, _count: "200" });
   const bundle = await request<AnyBundle<Condition>>(`Condition?${params.toString()}`);

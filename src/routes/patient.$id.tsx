@@ -28,6 +28,7 @@ import {
   codeableText,
   componentValue,
   getConditions,
+  getLabObservations,
   getMedicationRequests,
   getPatient,
   getVitalObservations,
@@ -41,6 +42,8 @@ import {
 } from "@/lib/fhir";
 import { DataTable, type Column } from "@/components/data-table";
 import { ResourceDetailDialog, type DetailField } from "@/components/resource-detail-dialog";
+import { Fib4Card } from "@/components/fib4-card";
+
 
 export const Route = createFileRoute("/patient/$id")({
   head: () => ({
@@ -210,6 +213,8 @@ function PatientDetailPage() {
   const vitalsQuery = useQuery({ queryKey: ["vitals", id], queryFn: () => getVitalObservations(id) });
   const conditionsQuery = useQuery({ queryKey: ["conditions", id], queryFn: () => getConditions(id) });
   const medsQuery = useQuery({ queryKey: ["medications", id], queryFn: () => getMedicationRequests(id) });
+  const labsQuery = useQuery({ queryKey: ["fib4-labs", id], queryFn: () => getLabObservations(id) });
+
 
   const patient = patientQuery.data;
   const observations = vitalsQuery.data ?? [];
@@ -263,6 +268,25 @@ function PatientDetailPage() {
             </div>
           )}
         </section>
+
+        {/* Liver fibrosis risk (FIB-4) */}
+        <section>
+          <Fib4Card
+            patient={patient}
+            labObservations={labsQuery.data}
+            conditions={conditionsQuery.data}
+            isPending={patientQuery.isPending || labsQuery.isPending}
+            errorMessage={
+              labsQuery.error instanceof Error
+                ? labsQuery.error.message
+                : patientQuery.error instanceof Error
+                  ? patientQuery.error.message
+                  : undefined
+            }
+          />
+        </section>
+
+
 
         {/* Vitals */}
         <section>
