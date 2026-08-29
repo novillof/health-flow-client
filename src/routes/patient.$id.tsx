@@ -213,6 +213,8 @@ function PatientDetailPage() {
   const vitalsQuery = useQuery({ queryKey: ["vitals", id], queryFn: () => getVitalObservations(id) });
   const conditionsQuery = useQuery({ queryKey: ["conditions", id], queryFn: () => getConditions(id) });
   const medsQuery = useQuery({ queryKey: ["medications", id], queryFn: () => getMedicationRequests(id) });
+  const labsQuery = useQuery({ queryKey: ["fib4-labs", id], queryFn: () => getLabObservations(id) });
+
 
   const patient = patientQuery.data;
   const observations = vitalsQuery.data ?? [];
