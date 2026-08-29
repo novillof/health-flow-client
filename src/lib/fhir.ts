@@ -141,17 +141,53 @@ export type Condition = {
   code?: CodeableConcept;
   onsetDateTime?: string;
   onsetPeriod?: { start?: string };
+  abatementDateTime?: string;
+  abatementPeriod?: { start?: string; end?: string };
   recordedDate?: string;
   clinicalStatus?: CodeableConcept;
+  verificationStatus?: CodeableConcept;
+  category?: CodeableConcept[];
+  severity?: CodeableConcept;
+  bodySite?: CodeableConcept[];
+  encounter?: { reference?: string; display?: string };
+  subject?: { reference?: string; display?: string };
+  recorder?: { reference?: string; display?: string };
+  asserter?: { reference?: string; display?: string };
+  note?: { text?: string }[];
+  meta?: { versionId?: string; lastUpdated?: string };
 };
 
 export type MedicationRequest = {
   resourceType: "MedicationRequest";
   id?: string;
   status?: string;
+  intent?: string;
+  priority?: string;
   medicationCodeableConcept?: CodeableConcept;
   medicationReference?: { display?: string; reference?: string };
   authoredOn?: string;
+  category?: CodeableConcept[];
+  reasonCode?: CodeableConcept[];
+  reasonReference?: { reference?: string; display?: string }[];
+  requester?: { reference?: string; display?: string };
+  encounter?: { reference?: string; display?: string };
+  subject?: { reference?: string; display?: string };
+  dosageInstruction?: {
+    text?: string;
+    sequence?: number;
+    timing?: { repeat?: { frequency?: number; period?: number; periodUnit?: string } };
+    route?: CodeableConcept;
+    asNeededBoolean?: boolean;
+    doseAndRate?: { doseQuantity?: Quantity }[];
+  }[];
+  dispenseRequest?: {
+    numberOfRepeatsAllowed?: number;
+    quantity?: Quantity;
+    expectedSupplyDuration?: Quantity;
+    validityPeriod?: { start?: string; end?: string };
+  };
+  note?: { text?: string }[];
+  meta?: { versionId?: string; lastUpdated?: string };
 };
 
 type AnyBundle<T> = {
@@ -183,6 +219,11 @@ export const VITAL_CODES = [
 
 export function observationCode(obs: Observation): string | undefined {
   return obs.code?.coding?.find((c) => c.code)?.code;
+}
+
+/** True when ANY coding on the observation matches one of the given LOINC codes. */
+export function observationMatchesCodes(obs: Observation, codes: string[]): boolean {
+  return (obs.code?.coding ?? []).some((c) => (c.code ? codes.includes(c.code) : false));
 }
 
 export function observationDate(obs: Observation): string | undefined {
