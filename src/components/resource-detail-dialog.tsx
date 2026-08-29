@@ -22,7 +22,7 @@ export function ResourceDetailDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
   fields: DetailField[];
   raw?: unknown;
 }) {
