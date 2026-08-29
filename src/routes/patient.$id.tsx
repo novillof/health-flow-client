@@ -311,40 +311,10 @@ function PatientDetailPage() {
           {conditionsQuery.error instanceof Error ? (
             <ErrorBox message={conditionsQuery.error.message} />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Condition</TableHead>
-                    <TableHead>Onset date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {conditionsQuery.isPending && (
-                    <TableRow>
-                      <TableCell colSpan={2}>
-                        <Skeleton className="h-4 w-40" />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {conditionsQuery.data?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={2} className="py-8 text-center text-muted-foreground">
-                        No conditions recorded.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {conditionsQuery.data?.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{codeableText(c.code)}</TableCell>
-                      <TableCell>
-                        {formatDateTime(c.onsetDateTime ?? c.onsetPeriod?.start ?? c.recordedDate)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <ConditionsPanel
+              conditions={conditionsQuery.data}
+              isPending={conditionsQuery.isPending}
+            />
           )}
         </section>
 
@@ -354,40 +324,7 @@ function PatientDetailPage() {
           {medsQuery.error instanceof Error ? (
             <ErrorBox message={medsQuery.error.message} />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Medication</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {medsQuery.isPending && (
-                    <TableRow>
-                      <TableCell colSpan={2}>
-                        <Skeleton className="h-4 w-40" />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {medsQuery.data?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={2} className="py-8 text-center text-muted-foreground">
-                        No medication requests found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {medsQuery.data?.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium">{medicationName(m)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{m.status ?? "unknown"}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <MedicationsPanel medications={medsQuery.data} isPending={medsQuery.isPending} />
           )}
         </section>
       </div>
