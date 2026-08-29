@@ -32,11 +32,15 @@ import {
   getPatient,
   getVitalObservations,
   medicationName,
-  observationCode,
   observationDate,
+  observationMatchesCodes,
   patientDisplayName,
+  type Condition,
+  type MedicationRequest,
   type Observation,
 } from "@/lib/fhir";
+import { DataTable, type Column } from "@/components/data-table";
+import { ResourceDetailDialog, type DetailField } from "@/components/resource-detail-dialog";
 
 export const Route = createFileRoute("/patient/$id")({
   head: () => ({
@@ -91,10 +95,7 @@ type Point = { date: string; label: string; unit?: string | undefined } & Record
 
 function buildPoints(observations: Observation[], def: VitalDef): Point[] {
   return observations
-    .filter((o) => {
-      const code = observationCode(o);
-      return code === def.code || (def.altCodes?.includes(code ?? "") ?? false);
-    })
+    .filter((o) => observationMatchesCodes(o, [def.code, ...(def.altCodes ?? [])]))
     .map((o) => {
       const date = observationDate(o) ?? "";
       const point: Point = {
