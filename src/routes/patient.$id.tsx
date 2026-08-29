@@ -28,6 +28,7 @@ import {
   codeableText,
   componentValue,
   getConditions,
+  getLabObservations,
   getMedicationRequests,
   getPatient,
   getVitalObservations,
@@ -41,6 +42,8 @@ import {
 } from "@/lib/fhir";
 import { DataTable, type Column } from "@/components/data-table";
 import { ResourceDetailDialog, type DetailField } from "@/components/resource-detail-dialog";
+import { Fib4Card } from "@/components/fib4-card";
+
 
 export const Route = createFileRoute("/patient/$id")({
   head: () => ({
