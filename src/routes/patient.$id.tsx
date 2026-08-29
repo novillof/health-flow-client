@@ -32,11 +32,15 @@ import {
   getPatient,
   getVitalObservations,
   medicationName,
-  observationCode,
   observationDate,
+  observationMatchesCodes,
   patientDisplayName,
+  type Condition,
+  type MedicationRequest,
   type Observation,
 } from "@/lib/fhir";
+import { DataTable, type Column } from "@/components/data-table";
+import { ResourceDetailDialog, type DetailField } from "@/components/resource-detail-dialog";
 
 export const Route = createFileRoute("/patient/$id")({
   head: () => ({
@@ -91,10 +95,7 @@ type Point = { date: string; label: string; unit?: string | undefined } & Record
 
 function buildPoints(observations: Observation[], def: VitalDef): Point[] {
   return observations
-    .filter((o) => {
-      const code = observationCode(o);
-      return code === def.code || (def.altCodes?.includes(code ?? "") ?? false);
-    })
+    .filter((o) => observationMatchesCodes(o, [def.code, ...(def.altCodes ?? [])]))
     .map((o) => {
       const date = observationDate(o) ?? "";
       const point: Point = {
@@ -310,40 +311,10 @@ function PatientDetailPage() {
           {conditionsQuery.error instanceof Error ? (
             <ErrorBox message={conditionsQuery.error.message} />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Condition</TableHead>
-                    <TableHead>Onset date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {conditionsQuery.isPending && (
-                    <TableRow>
-                      <TableCell colSpan={2}>
-                        <Skeleton className="h-4 w-40" />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {conditionsQuery.data?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={2} className="py-8 text-center text-muted-foreground">
-                        No conditions recorded.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {conditionsQuery.data?.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{codeableText(c.code)}</TableCell>
-                      <TableCell>
-                        {formatDateTime(c.onsetDateTime ?? c.onsetPeriod?.start ?? c.recordedDate)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <ConditionsPanel
+              conditions={conditionsQuery.data}
+              isPending={conditionsQuery.isPending}
+            />
           )}
         </section>
 
@@ -353,43 +324,259 @@ function PatientDetailPage() {
           {medsQuery.error instanceof Error ? (
             <ErrorBox message={medsQuery.error.message} />
           ) : (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Medication</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {medsQuery.isPending && (
-                    <TableRow>
-                      <TableCell colSpan={2}>
-                        <Skeleton className="h-4 w-40" />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {medsQuery.data?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={2} className="py-8 text-center text-muted-foreground">
-                        No medication requests found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {medsQuery.data?.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell className="font-medium">{medicationName(m)}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{m.status ?? "unknown"}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <MedicationsPanel medications={medsQuery.data} isPending={medsQuery.isPending} />
           )}
         </section>
       </div>
     </main>
+  );
+}
+
+/* ---------- Conditions panel ---------- */
+
+function conceptLabel(concept?: { text?: string; coding?: { code?: string; display?: string }[] }): string {
+  return (
+    concept?.text ??
+    concept?.coding?.find((c) => c.display)?.display ??
+    concept?.coding?.find((c) => c.code)?.code ??
+    ""
+  );
+}
+
+const RESOLVED_STATUSES = ["resolved", "remission", "inactive"];
+
+function isResolved(c: Condition): boolean {
+  return RESOLVED_STATUSES.includes(conceptLabel(c.clinicalStatus).toLowerCase());
+}
+
+function statusBadgeClass(status: string): string {
+  const s = status.toLowerCase();
+  if (["resolved", "remission", "completed"].includes(s))
+    return "border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+  if (["active", "confirmed"].includes(s))
+    return "border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300";
+  if (["inactive", "stopped", "cancelled", "entered-in-error"].includes(s))
+    return "border-rose-500/40 bg-rose-500/10 text-rose-700 dark:text-rose-300";
+  if (["on-hold", "draft", "provisional", "differential", "unconfirmed"].includes(s))
+    return "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  return "border-slate-400/40 bg-slate-400/10 text-slate-600 dark:text-slate-300";
+}
+
+function StatusBadge({ value }: { value: string }) {
+  if (!value) return <span className="text-muted-foreground">—</span>;
+  return (
+    <Badge variant="outline" className={statusBadgeClass(value)}>
+      {value}
+    </Badge>
+  );
+}
+
+function conditionOnset(c: Condition): string {
+  return c.onsetDateTime ?? c.onsetPeriod?.start ?? c.recordedDate ?? "";
+}
+
+function conditionAbatement(c: Condition): string {
+  return c.abatementDateTime ?? c.abatementPeriod?.end ?? c.abatementPeriod?.start ?? "";
+}
+
+function ConditionsPanel({
+  conditions,
+  isPending,
+}: {
+  conditions: Condition[] | undefined;
+  isPending: boolean;
+}) {
+  const [selected, setSelected] = useState<Condition | null>(null);
+
+  const columns: Column<Condition>[] = [
+    {
+      key: "name",
+      label: "Condition",
+      value: (c) => codeableText(c.code),
+      render: (c) => <span className="font-medium">{codeableText(c.code)}</span>,
+    },
+    {
+      key: "clinical",
+      label: "Clinical status",
+      value: (c) => conceptLabel(c.clinicalStatus),
+      filterable: true,
+      render: (c) => <StatusBadge value={conceptLabel(c.clinicalStatus)} />,
+    },
+    {
+      key: "verification",
+      label: "Verification status",
+      value: (c) => conceptLabel(c.verificationStatus),
+      filterable: true,
+      render: (c) => <StatusBadge value={conceptLabel(c.verificationStatus)} />,
+    },
+    {
+      key: "onset",
+      label: "Onset date",
+      value: conditionOnset,
+      sortAsDate: true,
+      render: (c) => formatDateTime(conditionOnset(c)),
+    },
+    {
+      key: "abatement",
+      label: "Resolution date",
+      value: conditionAbatement,
+      sortAsDate: true,
+      render: (c) => formatDateTime(conditionAbatement(c)),
+    },
+  ];
+
+  const fields: DetailField[] = selected
+    ? [
+        { label: "Condition", value: codeableText(selected.code) },
+        { label: "Clinical status", value: <StatusBadge value={conceptLabel(selected.clinicalStatus)} /> },
+        {
+          label: "Verification status",
+          value: <StatusBadge value={conceptLabel(selected.verificationStatus)} />,
+        },
+        { label: "Category", value: selected.category?.map((c) => codeableText(c)).join(", ") },
+        { label: "Severity", value: conceptLabel(selected.severity) },
+        { label: "Body site", value: selected.bodySite?.map((b) => codeableText(b)).join(", ") },
+        { label: "Onset", value: formatDateTime(conditionOnset(selected)) },
+        { label: "Resolution date", value: formatDateTime(conditionAbatement(selected)) },
+        { label: "Recorded date", value: formatDateTime(selected.recordedDate) },
+        { label: "Codes", value: selected.code?.coding?.map((c) => c.code).filter(Boolean).join(", ") },
+        { label: "Encounter", value: selected.encounter?.reference },
+        { label: "Recorder", value: selected.recorder?.display ?? selected.recorder?.reference },
+        { label: "Asserter", value: selected.asserter?.display ?? selected.asserter?.reference },
+        { label: "Notes", value: selected.note?.map((n) => n.text).filter(Boolean).join(" · ") },
+        { label: "Last updated", value: formatDateTime(selected.meta?.lastUpdated) },
+        { label: "Resource ID", value: selected.id },
+      ]
+    : [];
+
+  return (
+    <>
+      <DataTable
+        columns={columns}
+        rows={conditions}
+        isPending={isPending}
+        emptyMessage="No conditions recorded."
+        searchPlaceholder="Search conditions…"
+        onRowClick={setSelected}
+        rowClassName={(c) => (isResolved(c) ? "bg-emerald-500/10 hover:bg-emerald-500/15" : undefined)}
+      />
+      <ResourceDetailDialog
+        open={selected !== null}
+        onOpenChange={(open) => !open && setSelected(null)}
+        title={selected ? codeableText(selected.code) : ""}
+        subtitle={selected ? `Condition/${selected.id ?? ""}` : undefined}
+        fields={fields}
+        raw={selected}
+      />
+    </>
+  );
+}
+
+/* ---------- Medications panel ---------- */
+
+function MedicationsPanel({
+  medications,
+  isPending,
+}: {
+  medications: MedicationRequest[] | undefined;
+  isPending: boolean;
+}) {
+  const [selected, setSelected] = useState<MedicationRequest | null>(null);
+
+  const columns: Column<MedicationRequest>[] = [
+    {
+      key: "name",
+      label: "Medication",
+      value: medicationName,
+      render: (m) => <span className="font-medium">{medicationName(m)}</span>,
+    },
+    {
+      key: "status",
+      label: "Status",
+      value: (m) => m.status ?? "unknown",
+      filterable: true,
+      render: (m) => <StatusBadge value={m.status ?? "unknown"} />,
+    },
+    {
+      key: "intent",
+      label: "Intent",
+      value: (m) => m.intent ?? "",
+      filterable: true,
+    },
+    {
+      key: "authoredOn",
+      label: "Authored on",
+      value: (m) => m.authoredOn ?? "",
+      sortAsDate: true,
+      render: (m) => formatDateTime(m.authoredOn),
+    },
+  ];
+
+  const dosage = selected?.dosageInstruction?.[0];
+  const fields: DetailField[] = selected
+    ? [
+        { label: "Medication", value: medicationName(selected) },
+        { label: "Status", value: <StatusBadge value={selected.status ?? "unknown"} /> },
+        { label: "Intent", value: selected.intent },
+        { label: "Priority", value: selected.priority },
+        { label: "Authored on", value: formatDateTime(selected.authoredOn) },
+        { label: "Category", value: selected.category?.map((c) => codeableText(c)).join(", ") },
+        { label: "Reason", value: selected.reasonCode?.map((c) => codeableText(c)).join(", ") },
+        {
+          label: "Codes",
+          value: selected.medicationCodeableConcept?.coding
+            ?.map((c) => c.code)
+            .filter(Boolean)
+            .join(", "),
+        },
+        { label: "Dosage", value: dosage?.text },
+        { label: "Route", value: conceptLabel(dosage?.route) },
+        {
+          label: "Dose",
+          value: dosage?.doseAndRate?.[0]?.doseQuantity
+            ? `${dosage.doseAndRate[0].doseQuantity.value ?? ""} ${dosage.doseAndRate[0].doseQuantity.unit ?? ""}`.trim()
+            : undefined,
+        },
+        {
+          label: "Frequency",
+          value: dosage?.timing?.repeat
+            ? `${dosage.timing.repeat.frequency ?? ""}× / ${dosage.timing.repeat.period ?? ""} ${dosage.timing.repeat.periodUnit ?? ""}`.trim()
+            : undefined,
+        },
+        { label: "As needed", value: dosage?.asNeededBoolean === undefined ? undefined : dosage.asNeededBoolean ? "Yes" : "No" },
+        { label: "Refills allowed", value: selected.dispenseRequest?.numberOfRepeatsAllowed?.toString() },
+        {
+          label: "Validity period",
+          value: selected.dispenseRequest?.validityPeriod
+            ? `${formatDateTime(selected.dispenseRequest.validityPeriod.start)} → ${formatDateTime(selected.dispenseRequest.validityPeriod.end)}`
+            : undefined,
+        },
+        { label: "Requester", value: selected.requester?.display ?? selected.requester?.reference },
+        { label: "Encounter", value: selected.encounter?.reference },
+        { label: "Notes", value: selected.note?.map((n) => n.text).filter(Boolean).join(" · ") },
+        { label: "Last updated", value: formatDateTime(selected.meta?.lastUpdated) },
+        { label: "Resource ID", value: selected.id },
+      ]
+    : [];
+
+  return (
+    <>
+      <DataTable
+        columns={columns}
+        rows={medications}
+        isPending={isPending}
+        emptyMessage="No medication requests found."
+        searchPlaceholder="Search medications…"
+        onRowClick={setSelected}
+      />
+      <ResourceDetailDialog
+        open={selected !== null}
+        onOpenChange={(open) => !open && setSelected(null)}
+        title={selected ? medicationName(selected) : ""}
+        subtitle={selected ? `MedicationRequest/${selected.id ?? ""}` : undefined}
+        fields={fields}
+        raw={selected}
+      />
+    </>
   );
 }
