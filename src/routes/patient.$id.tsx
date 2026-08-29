@@ -269,6 +269,25 @@ function PatientDetailPage() {
           )}
         </section>
 
+        {/* Liver fibrosis risk (FIB-4) */}
+        <section>
+          <Fib4Card
+            patient={patient}
+            labObservations={labsQuery.data}
+            conditions={conditionsQuery.data}
+            isPending={patientQuery.isPending || labsQuery.isPending}
+            errorMessage={
+              labsQuery.error instanceof Error
+                ? labsQuery.error.message
+                : patientQuery.error instanceof Error
+                  ? patientQuery.error.message
+                  : undefined
+            }
+          />
+        </section>
+
+
+
         {/* Vitals */}
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
