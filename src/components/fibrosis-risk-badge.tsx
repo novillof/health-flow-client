@@ -66,8 +66,8 @@ export function FibrosisRiskBadge({ result }: { result: Fib4Result }) {
           className={cn("cursor-default gap-1 whitespace-nowrap", meta.className)}
         >
           <Icon className="size-3.5 shrink-0" aria-hidden />
-          <span className="max-[420px]:sr-only">{meta.label}</span>
-          <span className="sr-only max-[420px]:not-sr-only">{meta.label}</span>
+          <span className="hidden sm:inline">{meta.label}</span>
+          <span className="sr-only sm:hidden">{meta.label}</span>
         </Badge>
       </TooltipTrigger>
       <TooltipContent className="max-w-64">
