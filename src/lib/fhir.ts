@@ -132,7 +132,32 @@ export type Observation = {
   effectivePeriod?: { start?: string };
   issued?: string;
   valueQuantity?: Quantity;
+  subject?: { reference?: string; display?: string };
   component?: { code?: CodeableConcept; valueQuantity?: Quantity }[];
+};
+
+export type CarePlan = {
+  resourceType: "CarePlan";
+  id?: string;
+  status?: string;
+  intent?: string;
+  title?: string;
+  description?: string;
+  created?: string;
+  period?: { start?: string; end?: string };
+  category?: CodeableConcept[];
+  subject?: { reference?: string; display?: string };
+  addresses?: { reference?: string; display?: string }[];
+  activity?: {
+    detail?: {
+      status?: string;
+      kind?: string;
+      description?: string;
+      code?: CodeableConcept;
+    };
+  }[];
+  note?: { text?: string }[];
+  meta?: { versionId?: string; lastUpdated?: string };
 };
 
 export type Condition = {
