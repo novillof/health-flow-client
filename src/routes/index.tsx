@@ -184,6 +184,33 @@ function PatientsPage() {
     [patients.length],
   );
 
+  const patientIds = patients.map((p) => p.id).filter((id): id is string => !!id);
+  const labsQuery = useQuery({
+    queryKey: ["fib4-labs-bulk", patientIds],
+    queryFn: () => getLabObservationsForPatients(patientIds),
+    enabled: patientIds.length > 0,
+  });
+
+  const fib4ByPatient = useMemo(() => {
+    const labs: Record<string, Observation[]> = labsQuery.data ?? {};
+    const map = new Map<string, ReturnType<typeof calculateFIB4>>();
+    for (const patient of patients) {
+      if (!patient.id) continue;
+      const own = labs[patient.id];
+      map.set(
+        patient.id,
+        calculateFIB4({
+          birthDate: patient.birthDate ?? null,
+          astObservation: pickLatestObservation(own, FIB4_LOINC.ast),
+          altObservation: pickLatestObservation(own, FIB4_LOINC.alt),
+          plateletObservation: pickLatestObservation(own, FIB4_LOINC.platelets),
+        }),
+      );
+    }
+    return map;
+  }, [patients, labsQuery.data]);
+
+
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
