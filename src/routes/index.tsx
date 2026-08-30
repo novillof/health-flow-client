@@ -32,16 +32,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   createPatient,
   deletePatient,
+  getLabObservationsForPatients,
   patientDisplayName,
   searchPatients,
   updatePatient,
   type Gender,
+  type Observation,
   type Patient,
   type PatientInput,
 } from "@/lib/fhir";
+import { FIB4_LOINC, calculateFIB4, pickLatestObservation } from "@/lib/fib4";
+import { FibrosisRiskBadge } from "@/components/fibrosis-risk-badge";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -179,6 +184,33 @@ function PatientsPage() {
     [patients.length],
   );
 
+  const patientIds = patients.map((p) => p.id).filter((id): id is string => !!id);
+  const labsQuery = useQuery({
+    queryKey: ["fib4-labs-bulk", patientIds],
+    queryFn: () => getLabObservationsForPatients(patientIds),
+    enabled: patientIds.length > 0,
+  });
+
+  const fib4ByPatient = useMemo(() => {
+    const labs: Record<string, Observation[]> = labsQuery.data ?? {};
+    const map = new Map<string, ReturnType<typeof calculateFIB4>>();
+    for (const patient of patients) {
+      if (!patient.id) continue;
+      const own = labs[patient.id];
+      map.set(
+        patient.id,
+        calculateFIB4({
+          birthDate: patient.birthDate ?? null,
+          astObservation: pickLatestObservation(own, FIB4_LOINC.ast),
+          altObservation: pickLatestObservation(own, FIB4_LOINC.alt),
+          plateletObservation: pickLatestObservation(own, FIB4_LOINC.platelets),
+        }),
+      );
+    }
+    return map;
+  }, [patients, labsQuery.data]);
+
+
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
@@ -229,13 +261,15 @@ function PatientsPage() {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="overflow-x-auto rounded-xl border border-border bg-card">
+          <TooltipProvider delayDuration={150}>
           <Table>
             <TableHeader>
               <TableRow>
               <TableHead>Full name</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Date of birth</TableHead>
+                <TableHead>Fibrosis risk</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -243,7 +277,7 @@ function PatientsPage() {
               {patientsQuery.isPending &&
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    {Array.from({ length: 4 }).map((__, j) => (
+                    {Array.from({ length: 5 }).map((__, j) => (
                       <TableCell key={j}>
                         <Skeleton className="h-4 w-24" />
                       </TableCell>
@@ -253,7 +287,7 @@ function PatientsPage() {
 
               {!patientsQuery.isPending && patients.length === 0 && !errorMessage && (
                 <TableRow>
-                  <TableCell colSpan={4} className="py-12 text-center text-muted-foreground">
+                  <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">
                     <UserRound className="mx-auto mb-2 size-6" />
                     No patients found on the FHIR server.
                   </TableCell>
@@ -277,6 +311,16 @@ function PatientsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>{patient.birthDate ?? "—"}</TableCell>
+                  <TableCell>
+                    {labsQuery.isPending ? (
+                      <Skeleton className="h-5 w-20" />
+                    ) : (
+                      (() => {
+                        const result = patient.id ? fib4ByPatient.get(patient.id) : undefined;
+                        return result ? <FibrosisRiskBadge result={result} /> : "—";
+                      })()
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button variant="outline" size="sm" onClick={() => openEdit(patient)}>
@@ -296,6 +340,7 @@ function PatientsPage() {
                 </TableRow>
               ))}
             </TableBody>
+
           </Table>
         </div>
       </section>

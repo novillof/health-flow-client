@@ -132,7 +132,32 @@ export type Observation = {
   effectivePeriod?: { start?: string };
   issued?: string;
   valueQuantity?: Quantity;
+  subject?: { reference?: string; display?: string };
   component?: { code?: CodeableConcept; valueQuantity?: Quantity }[];
+};
+
+export type CarePlan = {
+  resourceType: "CarePlan";
+  id?: string;
+  status?: string;
+  intent?: string;
+  title?: string;
+  description?: string;
+  created?: string;
+  period?: { start?: string; end?: string };
+  category?: CodeableConcept[];
+  subject?: { reference?: string; display?: string };
+  addresses?: { reference?: string; display?: string }[];
+  activity?: {
+    detail?: {
+      status?: string;
+      kind?: string;
+      description?: string;
+      code?: CodeableConcept;
+    };
+  }[];
+  note?: { text?: string }[];
+  meta?: { versionId?: string; lastUpdated?: string };
 };
 
 export type Condition = {
@@ -260,6 +285,52 @@ export async function getLabObservations(patientId: string): Promise<Observation
   });
   const bundle = await request<AnyBundle<Observation>>(`Observation?${params.toString()}`);
   return collect(bundle, "Observation");
+}
+
+/**
+ * FIB-4 lab observations for many patients in a single search, grouped by patient id.
+ * Used by the patient list so it does not issue one request per row.
+ */
+export async function getLabObservationsForPatients(
+  patientIds: string[],
+): Promise<Record<string, Observation[]>> {
+  const grouped: Record<string, Observation[]> = {};
+  const ids = patientIds.filter(Boolean);
+  if (ids.length === 0) return grouped;
+
+  const chunkSize = 25;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const params = new URLSearchParams({
+      subject: chunk.map((id) => `Patient/${id}`).join(","),
+      code: FIB4_LAB_CODES.join(","),
+      _count: "1000",
+    });
+    const bundle = await request<AnyBundle<Observation>>(`Observation?${params.toString()}`);
+    for (const obs of collect(bundle, "Observation")) {
+      const ref = obs.subject?.reference ?? "";
+      const id = ref.split("/").pop();
+      if (!id) continue;
+      (grouped[id] ??= []).push(obs);
+    }
+  }
+  return grouped;
+}
+
+/* ---------- CarePlan (fibrosis follow-up pathway) ---------- */
+
+export async function getCarePlans(patientId: string): Promise<CarePlan[]> {
+  const params = new URLSearchParams({ patient: patientId, _count: "100" });
+  const bundle = await request<AnyBundle<CarePlan>>(`CarePlan?${params.toString()}`);
+  return collect(bundle, "CarePlan");
+}
+
+export async function createCarePlan(plan: CarePlan): Promise<CarePlan> {
+  return request<CarePlan>("CarePlan", {
+    method: "POST",
+    headers: { "Content-Type": "application/fhir+json" },
+    body: JSON.stringify(plan),
+  });
 }
 
 
