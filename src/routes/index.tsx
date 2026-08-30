@@ -32,16 +32,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   createPatient,
   deletePatient,
+  getLabObservationsForPatients,
   patientDisplayName,
   searchPatients,
   updatePatient,
   type Gender,
+  type Observation,
   type Patient,
   type PatientInput,
 } from "@/lib/fhir";
+import { FIB4_LOINC, calculateFIB4, pickLatestObservation } from "@/lib/fib4";
+import { FibrosisRiskBadge } from "@/components/fibrosis-risk-badge";
 
 export const Route = createFileRoute("/")({
   head: () => ({
