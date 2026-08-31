@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   codeableText,
   createCarePlan,
+  updateCarePlan,
   getCarePlans,
   patientDisplayName,
   type Condition,
@@ -165,6 +166,7 @@ function FibrosisPathwayAction({
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pathwayOpen, setPathwayOpen] = useState(false);
+  const [unenrollOpen, setUnenrollOpen] = useState(false);
 
   const plansQuery = useQuery({
     queryKey: ["careplans", patient.id],
@@ -190,6 +192,22 @@ function FibrosisPathwayAction({
       toast.error("Enrollment failed", { description: error.message }),
   });
 
+  const unenroll = useMutation({
+    mutationFn: async () => {
+      if (!pathway?.id) throw new Error("Pathway not found");
+      return updateCarePlan({ ...pathway, id: pathway.id, status: "revoked" });
+    },
+    onSuccess: () => {
+      toast.success("Enrollment revoked", {
+        description: `${FIBROSIS_PATHWAY_TITLE} set to revoked for ${patientDisplayName(patient)}.`,
+      });
+      setUnenrollOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ["careplans", patient.id] });
+    },
+    onError: (error: Error) =>
+      toast.error("Could not revoke enrollment", { description: error.message }),
+  });
+
   const recordedScore = pathway ? (pathwayFib4Score(pathway) ?? score.toFixed(2)) : score.toFixed(2);
   const enrolledDate = pathway ? (pathwayEnrolledDate(pathway) ?? "—") : "—";
 
@@ -209,6 +227,19 @@ function FibrosisPathwayAction({
           >
             Active
           </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={unenroll.isPending}
+            onClick={() => setUnenrollOpen(true)}
+          >
+            {unenroll.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <XCircle className="size-4" />
+            )}
+            Unenroll
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setPathwayOpen(true)}>
             View pathway
           </Button>
@@ -241,6 +272,36 @@ function FibrosisPathwayAction({
             <Button disabled={enroll.isPending} onClick={() => enroll.mutate()}>
               {enroll.isPending && <Loader2 className="size-4 animate-spin" />}
               Enroll patient
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={unenrollOpen} onOpenChange={setUnenrollOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unenroll patient from fibrosis follow-up?</DialogTitle>
+            <DialogDescription>
+              The {FIBROSIS_PATHWAY_TITLE} CarePlan will be updated on the FHIR server with status
+              &quot;revoked&quot;. No Conditions or Observations are modified.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 rounded-lg border border-border bg-background/60 p-3">
+            <DetailRow label="Patient" value={patientDisplayName(patient)} />
+            <DetailRow label="Current FIB-4" value={recordedScore} />
+            <DetailRow label="Enrolled" value={enrolledDate} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnenrollOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={unenroll.isPending}
+              onClick={() => unenroll.mutate()}
+            >
+              {unenroll.isPending && <Loader2 className="size-4 animate-spin" />}
+              Unenroll patient
             </Button>
           </DialogFooter>
         </DialogContent>
