@@ -277,6 +277,36 @@ function FibrosisPathwayAction({
         </DialogContent>
       </Dialog>
 
+      <Dialog open={unenrollOpen} onOpenChange={setUnenrollOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unenroll patient from fibrosis follow-up?</DialogTitle>
+            <DialogDescription>
+              The {FIBROSIS_PATHWAY_TITLE} CarePlan will be updated on the FHIR server with status
+              &quot;revoked&quot;. No Conditions or Observations are modified.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 rounded-lg border border-border bg-background/60 p-3">
+            <DetailRow label="Patient" value={patientDisplayName(patient)} />
+            <DetailRow label="Current FIB-4" value={recordedScore} />
+            <DetailRow label="Enrolled" value={enrolledDate} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnenrollOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={unenroll.isPending}
+              onClick={() => unenroll.mutate()}
+            >
+              {unenroll.isPending && <Loader2 className="size-4 animate-spin" />}
+              Unenroll patient
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={pathwayOpen} onOpenChange={setPathwayOpen}>
         <DialogContent>
           <DialogHeader>
