@@ -1,15 +1,44 @@
 import { useState } from "react";
-import { AlertCircle, ChevronDown, Info } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, CheckCircle2, ChevronDown, ClipboardList, Info, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { codeableText, type Condition, type Observation, type Patient } from "@/lib/fhir";
+import {
+  codeableText,
+  createCarePlan,
+  getCarePlans,
+  patientDisplayName,
+  type Condition,
+  type Observation,
+  type Patient,
+} from "@/lib/fhir";
 import {
   FIB4_LOINC,
   calculateFIB4,
   pickLatestObservation,
   type Fib4Result,
 } from "@/lib/fib4";
+import {
+  FIBROSIS_PATHWAY_NOTE,
+  FIBROSIS_PATHWAY_STEPS,
+  FIBROSIS_PATHWAY_TITLE,
+  FIBROSIS_PATHWAY_TRIGGER,
+  buildFibrosisCarePlan,
+  findActiveFibrosisPathway,
+  pathwayEnrolledDate,
+  pathwayFib4Score,
+} from "@/lib/fibrosis-pathway";
 import { cn } from "@/lib/utils";
 
 const CONTEXT_KEYWORDS = [
