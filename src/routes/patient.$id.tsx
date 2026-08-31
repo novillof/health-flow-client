@@ -367,11 +367,6 @@ function conceptLabel(concept?: { text?: string; coding?: { code?: string; displ
   );
 }
 
-const RESOLVED_STATUSES = ["resolved", "remission", "inactive"];
-
-function isResolved(c: Condition): boolean {
-  return RESOLVED_STATUSES.includes(conceptLabel(c.clinicalStatus).toLowerCase());
-}
 
 function statusBadgeClass(status: string): string {
   const s = status.toLowerCase();
