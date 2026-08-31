@@ -333,6 +333,14 @@ export async function createCarePlan(plan: CarePlan): Promise<CarePlan> {
   });
 }
 
+export async function updateCarePlan(plan: CarePlan & { id: string }): Promise<CarePlan> {
+  return request<CarePlan>(`CarePlan/${encodeURIComponent(plan.id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/fhir+json" },
+    body: JSON.stringify(plan),
+  });
+}
+
 
 
 export async function getConditions(patientId: string): Promise<Condition[]> {
