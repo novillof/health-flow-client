@@ -191,6 +191,22 @@ function FibrosisPathwayAction({
       toast.error("Enrollment failed", { description: error.message }),
   });
 
+  const unenroll = useMutation({
+    mutationFn: async () => {
+      if (!pathway?.id) throw new Error("Pathway not found");
+      return updateCarePlan({ ...pathway, id: pathway.id, status: "revoked" });
+    },
+    onSuccess: () => {
+      toast.success("Enrollment revoked", {
+        description: `${FIBROSIS_PATHWAY_TITLE} set to revoked for ${patientDisplayName(patient)}.`,
+      });
+      setUnenrollOpen(false);
+      void queryClient.invalidateQueries({ queryKey: ["careplans", patient.id] });
+    },
+    onError: (error: Error) =>
+      toast.error("Could not revoke enrollment", { description: error.message }),
+  });
+
   const recordedScore = pathway ? (pathwayFib4Score(pathway) ?? score.toFixed(2)) : score.toFixed(2);
   const enrolledDate = pathway ? (pathwayEnrolledDate(pathway) ?? "—") : "—";
 
