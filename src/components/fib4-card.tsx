@@ -421,6 +421,10 @@ export function Fib4Card({
               </p>
             </div>
           )}
+
+          {result.category === "high" && result.score !== null && patient?.id && (
+            <FibrosisPathwayAction patient={patient} score={result.score} conditions={conditions} />
+          )}
         </>
       )}
 
