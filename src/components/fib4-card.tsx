@@ -64,6 +64,15 @@ function relevantConditions(conditions: Condition[] | undefined): string[] {
   });
 }
 
+/** Contextual conditions referenced (never modified) by the follow-up CarePlan. */
+function relevantConditionResources(conditions: Condition[] | undefined): Condition[] {
+  return (conditions ?? []).filter((c) => {
+    const label = codeableText(c.code).toLowerCase();
+    return !!c.id && CONTEXT_KEYWORDS.some((k) => label.includes(k));
+  });
+}
+
+
 function formatDate(value: string | null): string {
   if (!value) return "—";
   const d = new Date(value);
