@@ -166,6 +166,7 @@ function FibrosisPathwayAction({
   const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pathwayOpen, setPathwayOpen] = useState(false);
+  const [unenrollOpen, setUnenrollOpen] = useState(false);
 
   const plansQuery = useQuery({
     queryKey: ["careplans", patient.id],
