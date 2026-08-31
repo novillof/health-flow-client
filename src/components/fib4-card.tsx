@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   codeableText,
   createCarePlan,
+  updateCarePlan,
   getCarePlans,
   patientDisplayName,
   type Condition,
