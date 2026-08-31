@@ -482,7 +482,6 @@ function ConditionsPanel({
         emptyMessage="No conditions recorded."
         searchPlaceholder="Search conditions…"
         onRowClick={setSelected}
-        rowClassName={(c) => (isResolved(c) ? "bg-emerald-500/10 hover:bg-emerald-500/15" : undefined)}
       />
       <ResourceDetailDialog
         open={selected !== null}
