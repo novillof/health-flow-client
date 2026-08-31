@@ -521,12 +521,6 @@ function MedicationsPanel({
       render: (m) => <StatusBadge value={m.status ?? "unknown"} />,
     },
     {
-      key: "intent",
-      label: "Intent",
-      value: (m) => m.intent ?? "",
-      filterable: true,
-    },
-    {
       key: "authoredOn",
       label: "Authored on",
       value: (m) => m.authoredOn ?? "",
