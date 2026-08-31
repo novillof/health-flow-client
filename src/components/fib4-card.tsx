@@ -226,6 +226,19 @@ function FibrosisPathwayAction({
           >
             Active
           </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={unenroll.isPending}
+            onClick={() => setUnenrollOpen(true)}
+          >
+            {unenroll.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <XCircle className="size-4" />
+            )}
+            Unenroll
+          </Button>
           <Button variant="ghost" size="sm" onClick={() => setPathwayOpen(true)}>
             View pathway
           </Button>
