@@ -340,8 +340,8 @@ function PatientsPage() {
                 </TableRow>
               ))}
             </TableBody>
-
           </Table>
+          </TooltipProvider>
         </div>
       </section>
 

@@ -73,10 +73,13 @@ export function buildFibrosisCarePlan({
       ? {
           addresses: (addresses ?? [])
             .filter((c) => c.id)
-            .map((c) => ({
-              reference: `Condition/${c.id}`,
-              display: c.code?.text ?? c.code?.coding?.find((x) => x.display)?.display ?? undefined,
-            })),
+            .map((c) => {
+              const display = c.code?.text ?? c.code?.coding?.find((x) => x.display)?.display;
+              return {
+                reference: `Condition/${c.id}`,
+                ...(display ? { display } : {}),
+              };
+            }),
         }
       : {}),
     activity: FIBROSIS_PATHWAY_STEPS.map((description) => ({
