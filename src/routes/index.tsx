@@ -51,16 +51,16 @@ import { FibrosisRiskBadge } from "@/components/fibrosis-risk-badge";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FHIR Patient Registry — Manage Patient Records" },
+      { title: "Fibrosis Care — FHIR-enabled patient registry & liver fibrosis assessment" },
       {
         name: "description",
         content:
-          "Search, create and update patient records live on a FHIR R4 server. Full name, gender and date of birth in one clinical workspace.",
+          "Search, create and update patient records live on a FHIR R4 server. Full name, gender, date of birth and liver fibrosis risk in one clinical workspace.",
       },
-      { property: "og:title", content: "FHIR Patient Registry" },
+      { property: "og:title", content: "Fibrosis Care" },
       {
         property: "og:description",
-        content: "Search, create and update FHIR R4 patient records in real time.",
+        content: "FHIR-enabled patient registry & liver fibrosis assessment.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -220,8 +220,8 @@ function PatientsPage() {
               <Activity className="size-5" />
             </span>
             <div>
-              <h1 className="text-xl font-semibold tracking-tight">Patient Registry</h1>
-              <p className="text-sm text-muted-foreground">Live FHIR R4 patient records</p>
+              <h1 className="text-xl font-semibold tracking-tight">Fibrosis Care</h1>
+              <p className="text-sm text-muted-foreground">FHIR-enabled patient registry & liver fibrosis assessment</p>
             </div>
           </div>
           <Button onClick={openCreate}>
@@ -231,6 +231,10 @@ function PatientsPage() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-8">
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold tracking-tight">Patient Registry</h2>
+          <p className="text-sm text-muted-foreground">Live FHIR R4 patient records</p>
+        </div>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="relative w-full max-w-sm">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
