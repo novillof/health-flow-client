@@ -210,6 +210,47 @@ function PatientsPage() {
     return map;
   }, [patients, labsQuery.data]);
 
+  const sortedPatients = useMemo(() => {
+    if (!sort) return patients;
+    const dir = sort.direction === "asc" ? 1 : -1;
+    const name = (p: Patient) => patientDisplayName(p).toLocaleLowerCase();
+    const rows = [...patients];
+    rows.sort((a, b) => {
+      switch (sort.key) {
+        case "name":
+          return dir * name(a).localeCompare(name(b));
+        case "gender":
+          return dir * (a.gender ?? "unknown").localeCompare(b.gender ?? "unknown");
+        case "birthDate": {
+          const av = a.birthDate ? Date.parse(`${a.birthDate}T00:00:00Z`) : Number.NaN;
+          const bv = b.birthDate ? Date.parse(`${b.birthDate}T00:00:00Z`) : Number.NaN;
+          if (Number.isNaN(av) && Number.isNaN(bv)) return name(a).localeCompare(name(b));
+          if (Number.isNaN(av)) return 1;
+          if (Number.isNaN(bv)) return -1;
+          return dir * (av - bv);
+        }
+        case "risk": {
+          const ra = a.id ? fib4ByPatient.get(a.id) : undefined;
+          const rb = b.id ? fib4ByPatient.get(b.id) : undefined;
+          const sa = ra ? fibrosisRiskStatus(ra) : "no-data";
+          const sb = rb ? fibrosisRiskStatus(rb) : "no-data";
+          if (sa !== sb) return dir * (RISK_PRIORITY[sa] - RISK_PRIORITY[sb]);
+          const scoreA = ra?.score ?? null;
+          const scoreB = rb?.score ?? null;
+          if (scoreA !== null && scoreB !== null && scoreA !== scoreB) {
+            return dir * (scoreB - scoreA);
+          }
+          return name(a).localeCompare(name(b));
+        }
+        default:
+          return 0;
+      }
+    });
+    return rows;
+  }, [patients, sort, fib4ByPatient]);
+
+
+
 
   return (
     <main className="min-h-screen bg-background">
