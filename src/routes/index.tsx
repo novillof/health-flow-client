@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertCircle, Loader2, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
+import { Activity, AlertCircle, ChevronDown, ChevronUp, ChevronsUpDown, Loader2, Pencil, Plus, Search, Trash2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,11 @@ import {
   type PatientInput,
 } from "@/lib/fhir";
 import { FIB4_LOINC, calculateFIB4, pickLatestObservation } from "@/lib/fib4";
-import { FibrosisRiskBadge } from "@/components/fibrosis-risk-badge";
+import {
+  FibrosisRiskBadge,
+  fibrosisRiskStatus,
+  type FibrosisRiskStatus,
+} from "@/components/fibrosis-risk-badge";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -106,6 +110,51 @@ function genderBadgeClass(gender: Gender): string {
   }
 }
 
+type SortKey = "name" | "gender" | "birthDate" | "risk";
+type SortState = { key: SortKey; direction: "asc" | "desc" } | null;
+
+/** Clinical priority order used when sorting the Fibrosis risk column. */
+const RISK_PRIORITY: Record<FibrosisRiskStatus, number> = {
+  high: 0,
+  intermediate: 1,
+  low: 2,
+  "no-data": 3,
+  "not-applicable": 4,
+};
+
+function SortableHead({
+  sortKey,
+  sort,
+  onSort,
+  className,
+  children,
+}: {
+  sortKey: SortKey;
+  sort: SortState;
+  onSort: (key: SortKey) => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const active = sort?.key === sortKey;
+  const direction = active ? sort!.direction : null;
+  const Icon = !active ? ChevronsUpDown : direction === "asc" ? ChevronUp : ChevronDown;
+  return (
+    <TableHead
+      className={className}
+      aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="-mx-2 inline-flex items-center gap-1.5 rounded-md px-2 py-1 font-medium transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      >
+        {children}
+        <Icon className={`size-3.5 ${active ? "text-foreground" : "text-muted-foreground/60"}`} aria-hidden="true" />
+      </button>
+    </TableHead>
+  );
+}
+
 function PatientsPage() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
@@ -115,6 +164,15 @@ function PatientsPage() {
   const [deleting, setDeleting] = useState<Patient | null>(null);
   const [form, setForm] = useState<PatientInput>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [sort, setSort] = useState<SortState>(null);
+
+  function toggleSort(key: SortKey) {
+    setSort((current) =>
+      current && current.key === key
+        ? { key, direction: current.direction === "asc" ? "desc" : "asc" }
+        : { key, direction: "asc" },
+    );
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setQuery(searchTerm), 350);
@@ -311,10 +369,10 @@ function PatientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-              <TableHead>Full name</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Date of birth</TableHead>
-                <TableHead>Fibrosis risk</TableHead>
+                <SortableHead sortKey="name" sort={sort} onSort={toggleSort}>Full name</SortableHead>
+                <SortableHead sortKey="gender" sort={sort} onSort={toggleSort}>Gender</SortableHead>
+                <SortableHead sortKey="birthDate" sort={sort} onSort={toggleSort}>Date of birth</SortableHead>
+                <SortableHead sortKey="risk" sort={sort} onSort={toggleSort}>Fibrosis risk</SortableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -339,7 +397,7 @@ function PatientsPage() {
                 </TableRow>
               )}
 
-              {patients.map((patient) => (
+              {sortedPatients.map((patient) => (
                 <TableRow key={patient.id}>
                   <TableCell className="font-medium">
                     <Link
