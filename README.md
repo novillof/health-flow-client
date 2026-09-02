@@ -106,25 +106,206 @@ The calculation combines information from multiple FHIR resources:
 
 ```text
 FIB-4 = (Age × AST) / (Platelet count × √ALT)
+```
+
+---
 
 ## Getting Started
 
-Prerequisites
+### Prerequisites
 
-* Node.js
-* npm
-* Access to a compatible FHIR R4 server
+- Node.js
 
-Installation
+- npm
+
+- Access to a compatible FHIR R4 server
+
+### Installation
 
 Clone the repository:
+
+```bash
+
 git clone https://github.com/novillof/health-flow-client.git
+
 cd health-flow-client
 
+```
+
 Install dependencies:
+
+```bash
+
 npm install
 
+```
+
 Start the development server:
+
+```bash
+
 npm run dev
 
+```
+
 The application will be available through the Vite development server.
+
+---
+
+## Available Scripts
+
+### Development
+
+```bash
+
+npm run dev
+
+```
+
+Starts the development server.
+
+### Production build
+
+```bash
+
+npm run build
+
+```
+
+Builds the application for production.
+
+### Preview
+
+```bash
+
+npm run preview
+
+```
+
+Previews the production build locally.
+
+### Lint
+
+```bash
+
+npm run lint
+
+```
+
+Runs ESLint.
+
+### Format
+
+```bash
+
+npm run format
+
+```
+
+Formats the project using Prettier.
+
+---
+
+## FHIR Server Configuration
+
+The application connects to a FHIR R4 server to retrieve patient and clinical data.
+
+The FHIR endpoint and authentication configuration should be provided through the application's configuration or environment mechanism.
+
+**Never commit API tokens, Bearer tokens, passwords, or other credentials to the repository.**
+
+---
+
+## Clinical Safety
+
+Fibrosis Care is a **demonstration and educational application** and is not intended for use in clinical practice.
+
+- FIB-4 is a risk stratification tool and not a diagnostic test.
+
+- A high FIB-4 score does not establish a diagnosis of liver fibrosis.
+
+- Missing data must not be interpreted as absence of disease.
+
+- Results should be interpreted together with the complete clinical history.
+
+- Local clinical guidelines and professional judgement should always take precedence.
+
+---
+
+## Medblocks FHIR App Challenge
+
+This project was developed as part of the **Medblocks FHIR App Challenge**.
+
+The application demonstrates:
+
+- Patient management using FHIR R4
+
+- Retrieval of clinical history
+
+- Use of `Observation`, `Condition`, and `MedicationRequest` resources
+
+- LOINC and SNOMED CT terminology
+
+- FIB-4 clinical risk calculation
+
+- Explainable clinical decision support
+
+- Fibrosis follow-up pathway enrollment
+
+The extended clinical workflow can be summarized as:
+
+```text
+
+FHIR interoperability
+
+        ↓
+
+Clinical data retrieval
+
+        ↓
+
+LOINC / SNOMED CT interpretation
+
+        ↓
+
+FIB-4 calculation
+
+        ↓
+
+Risk stratification
+
+        ↓
+
+Fibrosis Follow-up Pathway
+
+```
+
+---
+
+## Technology Stack
+
+- React 19
+
+- TypeScript
+
+- Vite
+
+- TanStack Start
+
+- TanStack Router
+
+- TanStack React Query
+
+- Tailwind CSS
+
+- Radix UI
+
+- Lucide React
+
+- React Hook Form
+
+- Zod
+
+- FHIR R4 REST API
+
+The application was developed with the assistance of **Lovable**.
