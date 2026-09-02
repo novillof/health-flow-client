@@ -1,68 +1,130 @@
-# Patient Connect
+# Fibrosis Care
 
-Build a Patient Management App that connects to a FHIR R4 server.
+**FHIR-enabled patient registry, clinical history viewer, liver fibrosis risk assessment, and follow-up management application.**
 
-FHIR Server Base URL: prompt me for providing it as a secret / env
+Fibrosis Care is a web application developed as part of the **Medblocks FHIR App Challenge**.
 
-Use Header: Authorization: Bearer (prompt me for providing it as a secret)
+The application connects to a **FHIR R4 server** to retrieve and manage patient records, display clinical information, calculate liver fibrosis risk using the **FIB-4 index**, and support enrollment into a follow-up pathway for patients with a high-risk result.
 
-All patient data should be read from and written to this FHIR server using the FHIR REST API. Do not use any local state or mock data.
+The project demonstrates how standardized healthcare interoperability data can be combined with simple, explainable clinical decision support.
 
-Features:
+> **Disclaimer:** This application is intended for educational and demonstration purposes only. FIB-4 is a risk stratification tool and does not establish a diagnosis of liver fibrosis. Results should always be interpreted in the appropriate clinical context.
 
-List patients: On load, fetch all patients from the FHIR server and display them in a table or list. Show each patient’s full name, gender, and date of birth.
+---
 
-Create a patient: Include a form with the following fields:
+## Live Demo
 
-Full name (given and family)
+**Application:**  
+https://health-flow-client.lovable.app/
 
-Gender (male, female, other, unknown)
+**Source code:**  
+https://github.com/novillof/health-flow-client
 
-Date of birth
+---
 
-Validate all fields before submitting. On submit, POST a valid FHIR Patient resource to the server. Refresh the patient list after a successful save.
+## Features
 
-Edit and update a patient: Each patient in the list should have an Edit button. Clicking it should open the same form pre-filled with that patient’s details. On submit, PUT the updated Patient resource back to the server using the patient’s ID. Refresh the list after a successful update.
+### Patient Registry
 
-Search by name: Include a search input that filters patients by name. Use the FHIR search parameter name and support partial search.
+The application provides a patient registry backed by a live **FHIR R4 server**.
 
-Technical requirements:
+Users can:
 
-Setup a simple FHIR Proxy on the backend that will pass all the FHIR API calls to the actual FHIR server after including the Authorization header.
+- List patients retrieved from the FHIR server
+- Search patients by name
+- Create new patients
+- Edit existing patients
+- Delete patients
+- Sort patients by name, gender, date of birth, or fibrosis risk
+- Quickly identify patients according to their fibrosis risk
 
-Call the backend FHIR proxy from the browser using fetch with all search parameters
+The registry displays:
 
-Patient resources must follow the FHIR R4 structure:
+- Full name
+- Gender
+- Date of birth
+- Fibrosis risk
+- Patient management actions
 
-Name should use name[0].given (array) and name[0].family (string)
+The fibrosis risk indicator is calculated from the patient's available FHIR clinical data and displayed directly in the patient list.
 
-Gender should use the gender field
+---
 
-Date of birth should use the birthDate field in YYYY-MM-DD format
+## Patient Clinical Summary
 
-Show a loading state while fetching
+Selecting a patient opens a clinical summary populated from FHIR resources.
 
-Show clear error messages if a request fails
+### Demographics
 
-This project was built with [Lovable](https://lovable.dev).
+Information obtained from the `Patient` resource:
 
-**Live app**: https://health-flow-client.lovable.app
+- Name
+- Gender
+- Date of birth
 
-## Build with Lovable
+### Vital Signs
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/2447e1f9-6910-4486-a874-6480cbf7c2fd).
+The application displays available vital signs such as:
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- Blood pressure
+- Heart rate
+- Temperature
+- Respiratory rate
+- Oxygen saturation
+- Height
+- Weight
+- BMI
 
-## Development
+These values are retrieved from FHIR `Observation` resources.
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+### Conditions
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+Active diagnoses and clinical problems are displayed from FHIR `Condition` resources.
+
+### Medications
+
+Active medications are displayed from FHIR `MedicationRequest` resources.
+
+---
+
+# Liver Fibrosis Risk Assessment
+
+Fibrosis Care provides a **FIB-4 (Fibrosis-4) assessment** for eligible adult patients.
+
+FIB-4 is a non-invasive risk stratification index used to estimate the likelihood of advanced liver fibrosis.
+
+The calculation combines information from multiple FHIR resources:
+
+| Input | FHIR source |
+|---|---|
+| Age | `Patient.birthDate` |
+| AST | `Observation` — LOINC `1920-8` |
+| ALT | `Observation` — LOINC `1742-6` |
+| Platelet count | `Observation` — LOINC `777-3` |
+
+### Formula
+
+```text
+FIB-4 = (Age × AST) / (Platelet count × √ALT)
+
+## Getting Started
+
+Prerequisites
+
+* Node.js
+* npm
+* Access to a compatible FHIR R4 server
+
+Installation
+
+Clone the repository:
+git clone https://github.com/novillof/health-flow-client.git
+cd health-flow-client
+
+Install dependencies:
+npm install
+
+Start the development server:
 npm run dev
-```
+
+The application will be available through the Vite development server.
