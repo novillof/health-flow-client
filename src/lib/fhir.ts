@@ -349,13 +349,53 @@ export async function getConditions(patientId: string): Promise<Condition[]> {
   return collect(bundle, "Condition");
 }
 
+export type Medication = {
+  resourceType: "Medication";
+  id?: string;
+  code?: CodeableConcept;
+};
+
 export async function getMedicationRequests(patientId: string): Promise<MedicationRequest[]> {
-  const params = new URLSearchParams({ patient: patientId, _count: "200" });
-  const bundle = await request<AnyBundle<MedicationRequest>>(
+  const params = new URLSearchParams({
+    patient: patientId,
+    _count: "200",
+    _include: "MedicationRequest:medication",
+  });
+  const bundle = await request<AnyBundle<MedicationRequest | Medication>>(
     `MedicationRequest?${params.toString()}`,
   );
-  return collect(bundle, "MedicationRequest");
+  const requests = collect(bundle, "MedicationRequest") as MedicationRequest[];
+  const included = collect(bundle, "Medication") as Medication[];
+
+  const byId = new Map<string, Medication>();
+  for (const med of included) if (med.id) byId.set(med.id, med);
+
+  // Fetch any referenced Medication resources the server did not include.
+  const missing = new Set<string>();
+  for (const req of requests) {
+    const id = req.medicationReference?.reference?.split("/").pop();
+    if (id && !byId.has(id) && !req.medicationReference?.display) missing.add(id);
+  }
+  await Promise.all(
+    [...missing].map(async (id) => {
+      try {
+        const med = await request<Medication>(`Medication/${encodeURIComponent(id)}`);
+        if (med?.resourceType === "Medication") byId.set(id, med);
+      } catch {
+        /* ignore unresolvable medication */
+      }
+    }),
+  );
+
+  return requests.map((req) => {
+    if (req.medicationCodeableConcept || req.medicationReference?.display) return req;
+    const id = req.medicationReference?.reference?.split("/").pop();
+    const med = id ? byId.get(id) : undefined;
+    if (!med?.code) return req;
+    return { ...req, medicationCodeableConcept: med.code };
+  });
 }
+
 
 export function medicationName(med: MedicationRequest): string {
   if (med.medicationCodeableConcept) return codeableText(med.medicationCodeableConcept);
